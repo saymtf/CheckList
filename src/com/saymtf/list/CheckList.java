@@ -7,6 +7,16 @@ import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -28,7 +38,7 @@ public class CheckList {
 	public static void main(String[] args) {
 		CheckList cL = new CheckList(); // Program
 	}
-		
+
 
 
 	private JFrame frame;
@@ -51,18 +61,18 @@ public class CheckList {
 		panels = new ArrayList<JPanel>();
 		editPanel = new JPanel(); // init editPanel
 		frontPanel = new JPanel();
-		
+
 		//Other Inits
-		
+
 		// Card Panel
 		cardPanel = new JPanel(); 
 		cardPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 		cardPanel.setLayout(new CardLayout());
 
 		mainPage();
-		
+
 		//These are needed
-		frame.setSize(new Dimension(1024, 1024));
+		frame.setExtendedState(JFrame.MAXIMIZED_BOTH);  //frame.setSize(new Dimension(1024, 1024));
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setVisible(true);
 		//frame.pack();
@@ -91,12 +101,12 @@ public class CheckList {
 				//JPasswordField passwordField = new JPasswordField(); // password field
 				//JOptionPane.showMessageDialog(null, passwordField, "Password", JOptionPane.WARNING_MESSAGE); // show dialog
 				//if(new String(passwordField.getPassword()).equals("poop")) {
-					CardLayout cardLayout = (CardLayout) cardPanel.getLayout();
-					cardLayout.show(cardPanel, "EditPanel");
-					frontPanel.remove(mainPanel);
-					changeFrame();
+				CardLayout cardLayout = (CardLayout) cardPanel.getLayout();
+				cardLayout.show(cardPanel, "EditPanel");
+				frontPanel.remove(mainPanel);
+				changeFrame();
 				//}
-					
+
 			}
 
 		});
@@ -104,45 +114,45 @@ public class CheckList {
 		//Description Scroll Panel
 		JPanel scrollPanel = new JPanel(new GridLayout(0,1,5,5));
 		scrollPanel.setAutoscrolls(true);
-		
+
 		//Show Labels
 		JPanel labelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 256, 0));
-		JLabel descriptionLabel = new JLabel("Description:");
-		JLabel commentLabel = new JLabel("Comment:");
+		JLabel descriptionLabel = new JLabel("Descriptions");
+		JLabel commentLabel = new JLabel("Comments");
 		labelPanel.add(descriptionLabel);
 		labelPanel.add(commentLabel);
-		
+
 		scrollPanel.add(labelPanel);
-		
+
 		//Set the Scroll Pane with Scroll Panel Component
 		JScrollPane scrollPane = new JScrollPane(scrollPanel);
 		scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-		scrollPane.setPreferredSize(new Dimension(928,656));
-		
-		
+		scrollPane.setPreferredSize(new Dimension(1000,650));
+
+
 		//deserialize(scrollPanel);
 		displayPanels(scrollPanel);
-		
-		
+
+
 		//Sign and Finish
 		JPanel finishPanel = new JPanel(); // PAnel
 		JLabel employeeLabel = new JLabel("Employee Name(s):");
 		JTextField employeeNamesField = new JTextField(); // Name Text Field
 		employeeNamesField.setPreferredSize(new Dimension(256, 28));
-		
-		
+
+
 		/******FIX THE UPDATED TIME (PUT IN thread or create a pop up within that function get the current time before accepting)****/
 		// Get the Date
-		
+
 		//Finish Button
 		JButton finishedButton = new JButton("Finished");
-		
+
 		// Finish Button Clicked..
 		finishedButton.addActionListener(new ActionListener() {
-			
+
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				
+
 				if(employeeNamesField.getText().equals("")) {
 					JOptionPane.showMessageDialog(null, "Please Sign the Employee Field..");
 				}else {
@@ -150,25 +160,66 @@ public class CheckList {
 					int val = JOptionPane.showConfirmDialog(null, 
 							"Today's Information is: " + today.getTime().toString() + 
 							"\n Employee(s): " + employeeNamesField.getText() + 
-							"\n Are you sure everything is finish?"); // show dialog
+							"\n Are you sure everything is finished?"); // show dialog
 					//Yes
 					if(val == 0) {
 						System.out.println("SENT");
 						// Save whole checklist information, date, time, employees, what was checked..
+						try {
+							PrintWriter writer = new PrintWriter(today.getTime().toString(), "UTF-8");
+							writer.write("Date: " + today.getTime().toString() + "\n\n"); // get the date
+							writer.write("Employee(s): " + employeeNamesField.getText() + "\n\n"); // get the employees working/signed
+
+							//Write all the descriptions and Comments to the file
+							for(JPanel panel: panels) {
+								writer.write(((JTextArea)panel.getComponent(0)).getText() + "\t\t" + 
+										((JTextArea)panel.getComponent(1)).getText() + "\n\n");
+							}
+
+							writer.close();
+						} catch (FileNotFoundException | UnsupportedEncodingException e1) {
+							// TODO Auto-generated catch block
+							e1.printStackTrace();
+						}
+
+
 						//Send to steve
-						//Re start everything except description
+
+
+						//Restart everything
+						final String javaBin = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
+						File currentJar;
+						try {
+							currentJar = new File(CheckList.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+							/* is it a jar file? */
+							if(!currentJar.getName().endsWith(".jar"))
+								return;
+
+							/* Build command: java -jar application.jar */
+							final ArrayList<String> command = new ArrayList<String>();
+							command.add(javaBin);
+							command.add("-jar");
+							command.add(currentJar.getPath());
+
+							final ProcessBuilder builder = new ProcessBuilder(command);
+							builder.start();
+							System.exit(0);
+						} catch (URISyntaxException | IOException e1) {
+							// TODO Auto-generated catch block
+							e1.printStackTrace();
+						}
 					}
 				}
 			}
 		});
-		
+
 		//SEND TO STEVE THROUGH EMAIL
-		
+
 		// Add to final panel
 		finishPanel.add(employeeLabel);
 		finishPanel.add(employeeNamesField);
 		finishPanel.add(finishedButton);
-		
+
 		mainPanel.add(editButton, BorderLayout.NORTH);
 		mainPanel.add(scrollPane, BorderLayout.CENTER);
 		mainPanel.add(finishPanel, BorderLayout.SOUTH);
@@ -181,7 +232,7 @@ public class CheckList {
 		frame.add(cardPanel);
 	}
 
-	
+
 	/**
 	 * When Settings Button is clicked you come here
 	 * 
@@ -193,7 +244,7 @@ public class CheckList {
 	 */
 	private void changeFrame() {
 		descriptionEditable(); // description is now editable
-		
+
 		JPanel mainPanel = new JPanel(new BorderLayout()); // Main Panel for Settings
 
 		JPanel addButtonPanel = new JPanel();
@@ -203,11 +254,11 @@ public class CheckList {
 
 		addButtonPanel.add(addButton); // add button to panel
 
-		
+
 		//Description Scroll Panel
 		JPanel scrollPanel = new JPanel();
 		scrollPanel.setLayout(new BoxLayout(scrollPanel, BoxLayout.Y_AXIS));
-		
+
 		//Set the Scroll Pane with Scroll Panel Component
 		JScrollPane scrollPane = new JScrollPane(scrollPanel);
 		scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
@@ -216,20 +267,20 @@ public class CheckList {
 
 		//Show the Remove Button
 		showButton();
-		
+
 		// Display All the Current JPanel Texts
 		displayPanels(scrollPanel);
-		
-		
+
+
 		/*
-		
+
 		The Remove Button WILL NOT work if serialized, since the button will not be apart of the actionlistener any more..
-		
+
 		Fix:
 			Have a listener for the panel object array.. (maybe in thread) to check if something was clicked.
-			
-		*/
-		
+
+		 */
+
 		//When Add(+) Button Gets Clicked..
 		addButton.addActionListener(new ActionListener() {
 
@@ -239,25 +290,24 @@ public class CheckList {
 				JPanel textPanels = new JPanel(); // create panel to add to list 
 
 				JTextArea textArea = new JTextArea("");
-				textArea.setPreferredSize(new Dimension(482,64));
+				textArea.setPreferredSize(new Dimension(420,64));
 				textArea.setLineWrap(true);
 				textArea.setWrapStyleWord(true);
-				
+
 				JTextArea sign = new JTextArea("");
-				sign.setPreferredSize(new Dimension(256,64));  
+				sign.setPreferredSize(new Dimension(300,64));  
 				sign.setLineWrap(true);
 				sign.setWrapStyleWord(true);
-				
+
 				JButton removeButton = new JButton("X");
-				
-				
+
+
 				// If Button Clicked (REMOVE)
 				removeButton.addActionListener(new ActionListener() {
 
 					@Override
 					public void actionPerformed(ActionEvent e) {
 						for(int i = 0; i < panels.size(); i++) {
-							//System.out.pr)intln(e.getSource() + "\n" + panels.get(i).getComponent(2) + "\n" + e.getSource() == panels.get(i).getComponent(2) + "\n\n\n");
 							if(e.getSource() == panels.get(i).getComponent(2)) {
 								panels.get(i).removeAll();
 								panels.remove(i);
@@ -271,41 +321,42 @@ public class CheckList {
 					}
 
 				});
-				
+
 				textPanels.add(textArea);
 				textPanels.add(sign);
 				textPanels.add(removeButton);
-				
+
 				// Add Panel to List
 				panels.add(textPanels);
 
 
 				//Display the panels in the list
 				displayPanels(scrollPanel);
-				scrollPane.validate();
+				scrollPane.revalidate();
+				scrollPane.repaint();
 			}
 		});
-		
-		/*
-		// TEST TO REMOVE PANEL
-		for(JPanel checkClick: panels) {
-			
-			System.out.println("Clicked");
-			((JButton)checkClick.getComponent(2)).addActionListener(new ActionListener() {
 
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					checkClick.removeAll();
-					checkClick.remove(checkClick);
-					displayPanels(scrollPanel);
-					scrollPane.revalidate();
-					scrollPane.repaint();
-				}
-			});
-			
-		}
-		*/
-		
+
+		//		// TEST TO REMOVE PANEL
+		//		for(JPanel checkClick: panels) {
+		//			
+		//			System.out.println("Clicked");
+		//			((JButton)checkClick.getComponent(2)).addActionListener(new ActionListener() {
+		//
+		//				@Override
+		//				public void actionPerformed(ActionEvent e) {
+		//					checkClick.removeAll();
+		//					checkClick.remove(checkClick);
+		//					displayPanels(scrollPanel);
+		//					scrollPane.revalidate();
+		//					scrollPane.repaint();
+		//				}
+		//			});
+		//			
+		//		}
+		//		
+
 		JPanel doneEdittingButtonPanel = new JPanel();
 
 		// Finish Editing Button
@@ -318,14 +369,14 @@ public class CheckList {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				// iterate through and make description setEditable False!
-				
+
 				// Hide the remove(X) button & Make Description Uneditable
 				removeButton();
 				descriptionUnEditable();
-				
+
 				// Save What was inputted into description
 				//serialize();
-				
+
 				// Go Back To Main Layout
 				CardLayout cardLayout = (CardLayout) cardPanel.getLayout();
 				cardLayout.show(cardPanel, "MainPanel");
@@ -344,34 +395,34 @@ public class CheckList {
 		// Add To Edit Panel
 		editPanel.add(mainPanel);
 	}
-	
-	
-	
+
+
+
 	private void descriptionEditable() {
 		for(JPanel panel: panels) {
 			((JTextArea)panel.getComponent(0)).setEditable(true);
 		}
 	}
-	
-	
+
+
 	private void descriptionUnEditable() {
 		for(JPanel panel: panels) {
 			((JTextArea)panel.getComponent(0)).setEditable(false);
 		}
 	}
-	
+
 	private void showButton() {
 		for(JPanel panel: panels) {
 			panel.getComponent(2).setVisible(true);
 		}
 	}
-	
+
 	private void removeButton() {
 		for(JPanel panel: panels) {
 			panel.getComponent(2).setVisible(false);
 		}
 	}
-	
+
 	private void displayPanels(JPanel textAreaPanels) {
 		//serialize();
 		//deserialize();
@@ -379,29 +430,30 @@ public class CheckList {
 			textAreaPanels.add(panel);
 		}
 	}
-/*
+
+	/*
 	@SuppressWarnings("unchecked")
 	private void deserialize(JPanel panel) {
 		try
-	      {
-	         FileInputStream fileIn = new FileInputStream("/Users/mitchellfenton/Documents/workspace/RollicksCheckList/employeeList.ser");
-	         ObjectInputStream in = new ObjectInputStream(fileIn);
-	         panels = (ArrayList<JPanel>) in.readObject();
-	         in.close();
-	         fileIn.close();
-	         displayPanels(panel);
-	      }catch(IOException i)
-	      {
-	         i.printStackTrace();
-	         return;
-	      }catch(ClassNotFoundException c)
-	      {
-	         System.out.println("JPanel class not found");
-	         c.printStackTrace();
-	         return;
-	      }
+		{
+			FileInputStream fileIn = new FileInputStream("/Users/mitchellfenton/Documents/workspace/RollicksCheckList/employeeList.ser");
+			ObjectInputStream in = new ObjectInputStream(fileIn);
+			panels = (ArrayList<JPanel>) in.readObject();
+			in.close();
+			fileIn.close();
+			displayPanels(panel);
+		}catch(IOException i)
+		{
+			i.printStackTrace();
+			return;
+		}catch(ClassNotFoundException c)
+		{
+			System.out.println("JPanel class not found");
+			c.printStackTrace();
+			return;
+		}
 	}
-	
+
 	private void serialize() {
 		try {
 			FileOutputStream fileOut = new FileOutputStream("/Users/mitchellfenton/Documents/workspace/RollicksCheckList/employeeList.ser");
