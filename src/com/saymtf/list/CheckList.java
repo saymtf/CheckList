@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
+import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -33,7 +34,13 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.ScrollPaneConstants;
-public class CheckList {
+public class CheckList implements Serializable{
+
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 7587358120501612102L;
 
 	public static void main(String[] args) {
 		CheckList cL = new CheckList(); // Program
@@ -87,7 +94,7 @@ public class CheckList {
 	 * 
 	 */
 	private void mainPage() {
-
+		
 		JPanel mainPanel = new JPanel(new BorderLayout()); // main panel
 
 		// Settings Button
@@ -130,9 +137,9 @@ public class CheckList {
 		scrollPane.setPreferredSize(new Dimension(1000,650));
 
 
-		//deserialize(scrollPanel);
+		deserialize(scrollPanel);
 		displayPanels(scrollPanel);
-
+		
 
 		//Sign and Finish
 		JPanel finishPanel = new JPanel(); // PAnel
@@ -140,9 +147,6 @@ public class CheckList {
 		JTextField employeeNamesField = new JTextField(); // Name Text Field
 		employeeNamesField.setPreferredSize(new Dimension(256, 28));
 
-
-		/******FIX THE UPDATED TIME (PUT IN thread or create a pop up within that function get the current time before accepting)****/
-		// Get the Date
 
 		//Finish Button
 		JButton finishedButton = new JButton("Finished");
@@ -302,25 +306,25 @@ public class CheckList {
 				JButton removeButton = new JButton("X");
 
 
-				// If Button Clicked (REMOVE)
-				removeButton.addActionListener(new ActionListener() {
-
-					@Override
-					public void actionPerformed(ActionEvent e) {
-						for(int i = 0; i < panels.size(); i++) {
-							if(e.getSource() == panels.get(i).getComponent(2)) {
-								panels.get(i).removeAll();
-								panels.remove(i);
-								displayPanels(scrollPanel);
-								scrollPane.revalidate();
-								scrollPane.repaint();
-								break;
-							}
-						}
-
-					}
-
-				});
+//				// If Button Clicked (REMOVE)
+//				removeButton.addActionListener(new ActionListener() {
+//
+//					@Override
+//					public void actionPerformed(ActionEvent e) {
+//						for(int i = 0; i < panels.size(); i++) {
+//							if(e.getSource() == panels.get(i).getComponent(2)) {
+//								panels.get(i).removeAll();
+//								panels.remove(i);
+//								displayPanels(scrollPanel);
+//								scrollPane.revalidate();
+//								scrollPane.repaint();
+//								break;
+//							}
+//						}
+//
+//					}
+//
+//				});
 
 				textPanels.add(textArea);
 				textPanels.add(sign);
@@ -339,23 +343,13 @@ public class CheckList {
 
 
 		//		// TEST TO REMOVE PANEL
-		//		for(JPanel checkClick: panels) {
-		//			
-		//			System.out.println("Clicked");
-		//			((JButton)checkClick.getComponent(2)).addActionListener(new ActionListener() {
-		//
-		//				@Override
-		//				public void actionPerformed(ActionEvent e) {
-		//					checkClick.removeAll();
-		//					checkClick.remove(checkClick);
-		//					displayPanels(scrollPanel);
-		//					scrollPane.revalidate();
-		//					scrollPane.repaint();
-		//				}
-		//			});
-		//			
-		//		}
-		//		
+		for(int i = 0; i < panels.size(); i++) {
+
+			System.out.println("Clicked");
+			((JButton)panels.get(i).getComponent(2)).addActionListener(new Listener(i, scrollPanel, scrollPane));
+				
+		}
+
 
 		JPanel doneEdittingButtonPanel = new JPanel();
 
@@ -368,14 +362,13 @@ public class CheckList {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				// iterate through and make description setEditable False!
-
 				// Hide the remove(X) button & Make Description Uneditable
+				System.out.println(panels.size());
 				removeButton();
 				descriptionUnEditable();
-
+				
 				// Save What was inputted into description
-				//serialize();
+				serialize();
 
 				// Go Back To Main Layout
 				CardLayout cardLayout = (CardLayout) cardPanel.getLayout();
@@ -396,7 +389,26 @@ public class CheckList {
 		editPanel.add(mainPanel);
 	}
 
-
+	private class Listener implements ActionListener {
+		int i = -1;
+		JPanel scrollPanel;
+		JScrollPane scrollPane;
+		
+		public Listener(int i, JPanel panel, JScrollPane pane) {
+			this.i = i;
+			scrollPane = pane;
+			scrollPanel = panel;
+		}
+		
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			panels.get(i).removeAll();
+			panels.remove(i);
+			displayPanels(scrollPanel);
+			scrollPane.revalidate();
+			scrollPane.repaint();
+		}
+	}
 
 	private void descriptionEditable() {
 		for(JPanel panel: panels) {
@@ -431,7 +443,7 @@ public class CheckList {
 		}
 	}
 
-	/*
+
 	@SuppressWarnings("unchecked")
 	private void deserialize(JPanel panel) {
 		try
@@ -467,5 +479,5 @@ public class CheckList {
 			i.printStackTrace();
 		}
 	}
-*/
+
 }
