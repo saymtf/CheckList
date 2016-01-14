@@ -1,0 +1,3 @@
+Manifest-Version: 1.0
+Created-By: 01.11.16
+Main-Class: com.saymtf.list.CheckList
